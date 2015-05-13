@@ -11,7 +11,7 @@
 """
 
 from flask import current_app as app, abort
-from eve.utils import config
+from eve.utils import config, get_id_field
 from eve.auth import requires_auth
 from eve.methods.common import get_document, ratelimit, pre_event, oplog_push
 from eve.versioning import versioned_id_field
@@ -93,23 +93,26 @@ def deleteitem_internal(resource, concurrency_check=False, **lookup):
         # get_document() call since it also deals with etag matching, which is
         # still needed. Also, this lookup should never fail.
         # TODO not happy with this hack. Not at all. Is there a better way?
-        original = app.data.find_one_raw(resource, original[config.ID_FIELD])
+        id_field = get_id_field(resource)
+        original = app.data.find_one_raw(resource, original[id_field])
 
     for field in media_fields:
         if field in original:
             app.media.delete(original[field])
 
-    id = original[config.ID_FIELD]
-    app.data.remove(resource, {config.ID_FIELD: id})
+    id_field = get_id_field(resource)
+    id = original[id_field]
+    app.data.remove(resource, {id_field: id})
 
     # update oplog if needed
     oplog_push(resource, original, 'DELETE', id)
 
     # TODO: should attempt to delete version collection even if setting is off
     if app.config['DOMAIN'][resource]['versioning'] is True:
+        id_field = get_id_field(resource)
         app.data.remove(
             resource + config.VERSIONS,
-            {versioned_id_field(): original[config.ID_FIELD]})
+            {versioned_id_field(): original[id_field]})
 
     getattr(app, "on_deleted_item")(resource, original)
     getattr(app, "on_deleted_item_%s" % resource)(original)

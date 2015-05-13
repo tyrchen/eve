@@ -16,7 +16,7 @@ from eve.auth import requires_auth
 from eve.defaults import resolve_default_values
 from eve.validation import ValidationError
 from flask import current_app as app, abort
-from eve.utils import config, debug_error_message, parse_request
+from eve.utils import config, debug_error_message, parse_request, get_id_field
 from eve.methods.common import get_document, parse, payload as payload_, \
     ratelimit, pre_event, store_media_files, resolve_user_restricted_access, \
     resolve_embedded_fields, build_response_document, marshal_write_response, \
@@ -103,6 +103,7 @@ def put_internal(resource, payload=None, concurrency_check=False,
     """
     resource_def = app.config['DOMAIN'][resource]
     schema = resource_def['schema']
+    id_field = get_id_field(resource)
     if not skip_validation:
         validator = app.validator(schema, resource)
 
@@ -117,7 +118,7 @@ def put_internal(resource, payload=None, concurrency_check=False,
     last_modified = None
     etag = None
     issues = {}
-    object_id = original[config.ID_FIELD]
+    object_id = original[id_field]
 
     response = {}
 
@@ -146,8 +147,8 @@ def put_internal(resource, payload=None, concurrency_check=False,
             # ID_FIELD not in document means it is not being automatically
             # handled (it has been set to a field which exists in the
             # resource schema.
-            if config.ID_FIELD not in document:
-                document[config.ID_FIELD] = object_id
+            if id_field not in document:
+                document[id_field] = object_id
 
             resolve_user_restricted_access(document, resource)
             resolve_default_values(document, resource_def['defaults'])

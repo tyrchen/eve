@@ -410,5 +410,9 @@ def auto_fields(resource):
 
     return fields
 
+
+def get_id_field(resource):
+    return config.DOMAIN[resource].get('item_lookup_field', config.ID_FIELD)
+
 # Base string type that is compatible with both Python 2.x and 3.x.
 str_type = str if sys.version_info[0] == 3 else basestring

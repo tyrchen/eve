@@ -1,6 +1,6 @@
 import copy
 from flask import current_app as app, abort
-from eve.utils import config, debug_error_message
+from eve.utils import config, debug_error_message, get_id_field
 from werkzeug.exceptions import BadRequestKeyError
 
 
@@ -216,7 +216,9 @@ def synthesize_versioned_document(document, delta, resource_def):
             'You must include %s in any projection with a version query.'
             % versioned_id_field()
         ))
-    delta[app.config['ID_FIELD']] = delta[versioned_id_field()]
+    id_field = resource_def.get('item_lookup_field', config.ID_FIELD)
+    delta[id_field] = delta[
+        versioned_id_field()]
     del delta[versioned_id_field()]
 
     # remove all versioned fields from document
@@ -254,7 +256,7 @@ def get_old_document(resource, req, lookup, document, version):
 
         # parameters to find specific document version
         if versioned_id_field() not in lookup:
-            lookup[versioned_id_field()] = lookup[app.config['ID_FIELD']]
+            lookup[versioned_id_field()] = lookup[get_id_field(resource)]
             del lookup[app.config['ID_FIELD']]
         lookup[config.VERSION] = version
 

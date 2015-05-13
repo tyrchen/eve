@@ -13,7 +13,7 @@
 
 from datetime import datetime
 from flask import current_app as app, abort
-from eve.utils import config, parse_request, debug_error_message
+from eve.utils import config, parse_request, debug_error_message, get_id_field
 from eve.auth import requires_auth
 from eve.defaults import resolve_default_values
 from eve.validation import ValidationError
@@ -142,6 +142,7 @@ def post_internal(resource, payl=None, skip_validation=False):
     date_utc = datetime.utcnow().replace(microsecond=0)
     resource_def = app.config['DOMAIN'][resource]
     schema = resource_def['schema']
+    id_field = get_id_field(resource)
     if not skip_validation:
         validator = app.validator(schema, resource)
     documents = []
@@ -234,8 +235,8 @@ def post_internal(resource, payl=None, skip_validation=False):
         for document in documents:
             # either return the custom ID_FIELD or the id returned by
             # data.insert().
-            document[config.ID_FIELD] = \
-                document.get(config.ID_FIELD, ids.pop(0))
+            document[id_field] = \
+                document.get(id_field, ids.pop(0))
 
             # build the full response document
             result = document

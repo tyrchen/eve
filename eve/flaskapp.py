@@ -715,7 +715,7 @@ class Eve(Flask, Events):
         # we choose not to care about trailing slashes at all.
         # Both '/resource/' and '/resource' will work, same with
         # '/resource/<id>/' and '/resource/<id>'
-        self.url_map.strict_slashes = False
+        self.url_map.strict_slashes = self.config.get("STRICT_SLASHES", False)
 
         # home page (API entry point)
         self.add_url_rule('%s/' % self.api_prefix, 'home',

@@ -20,7 +20,7 @@ from flask import current_app as app, request, abort, g, Response
 from functools import wraps
 
 from eve.utils import parse_request, document_etag, config, request_method, \
-    debug_error_message, auto_fields
+    debug_error_message, auto_fields, get_id_field
 from eve.versioning import resolve_document_version, \
     get_data_version_relation_document, missing_version_field
 
@@ -457,14 +457,15 @@ def build_response_document(
                                               ignore_fields=ignore_fields)
 
     # hateoas links
-    if config.DOMAIN[resource]['hateoas'] and config.ID_FIELD in document:
+    id_field = get_id_field(resource)
+    if config.DOMAIN[resource]['hateoas'] and id_field in document:
         version = None
         if config.DOMAIN[resource]['versioning'] is True \
                 and request.args.get(config.VERSION_PARAM):
             version = document[config.VERSION]
         document[config.LINKS] = {'self':
                                   document_link(resource,
-                                                document[config.ID_FIELD],
+                                                document[id_field],
                                                 version)}
 
     # add version numbers
@@ -606,8 +607,9 @@ def embedded_document(reference, data_relation, field_name):
                                 [], latest_embedded_doc)
     else:
         subresource = data_relation['resource']
+        id_field = get_id_field(subresource)
         embedded_doc = app.data.find_one(subresource, None,
-                                         **{config.ID_FIELD: reference})
+                                         **{id_field: reference})
         if embedded_doc:
             resolve_media_files(embedded_doc, subresource)
 
@@ -990,11 +992,12 @@ def oplog_push(resource, document, op, id=None):
         updates = [updates]
 
     entries = []
+    id_field = get_id_field(resource)
     for update in updates:
         entry = {
             'r': config.URLS[resource],
             'o': op,
-            'i': update[config.ID_FIELD] if config.ID_FIELD in update else id,
+            'i': update[id_field] if id_field in update else id,
         }
         if config.LAST_UPDATED in update:
             last_update = update[config.LAST_UPDATED]
