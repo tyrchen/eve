@@ -102,7 +102,7 @@ def deleteitem_internal(resource, concurrency_check=False, **lookup):
 
     id_field = get_id_field(resource)
     id = original[id_field]
-    app.data.remove(resource, {id_field: id})
+    app.data.remove(resource, original)
 
     # update oplog if needed
     oplog_push(resource, original, 'DELETE', id)
