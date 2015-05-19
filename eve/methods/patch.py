@@ -13,7 +13,7 @@
 from flask import current_app as app, abort
 from werkzeug import exceptions
 from datetime import datetime
-from eve.utils import config, debug_error_message, parse_request
+from eve.utils import config, debug_error_message, parse_request, get_id_field
 from eve.auth import requires_auth
 from eve.validation import ValidationError
 from eve.methods.common import get_document, parse, payload as payload_, \
@@ -133,7 +133,7 @@ def patch_internal(resource, payload=None, concurrency_check=False,
     if not skip_validation:
         validator = app.validator(schema, resource)
 
-    object_id = original[config.ID_FIELD]
+    object_id = original[get_id_field(resource)]
     last_modified = None
     etag = None
 

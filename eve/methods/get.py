@@ -16,7 +16,7 @@ from flask import current_app as app, abort, request
 from .common import ratelimit, epoch, pre_event, resolve_embedded_fields, \
     build_response_document, resource_link, document_link
 from eve.auth import requires_auth
-from eve.utils import parse_request, home_link, querydef, config
+from eve.utils import parse_request, home_link, querydef, config, get_id_field
 from eve.versioning import synthesize_versioned_document, versioned_id_field, \
     get_old_document, diff_document
 
@@ -202,6 +202,7 @@ def getitem(resource, **lookup):
     version = request.args.get(config.VERSION_PARAM)
     latest_doc = None
     cursor = None
+    id_field = get_id_field(resource)
 
     # synthesize old document version(s)
     if resource_def['versioning'] is True:
@@ -232,7 +233,7 @@ def getitem(resource, **lookup):
 
     if version == 'all' or version == 'diffs':
         # find all versions
-        lookup[versioned_id_field()] = lookup[app.config['ID_FIELD']]
+        lookup[versioned_id_field()] = lookup[id_field]
         del lookup[app.config['ID_FIELD']]
         if version == 'diffs' or req.sort is None:
             # default sort for 'all', required sort for 'diffs'
@@ -286,13 +287,13 @@ def getitem(resource, **lookup):
             count = cursor.count(with_limit_and_skip=False)
             response[config.LINKS] = \
                 _pagination_links(resource, req, count,
-                                  latest_doc[config.ID_FIELD])
+                                  latest_doc[id_field])
             if config.DOMAIN[resource]['pagination']:
                 response[config.META] = _meta_links(req, count)
         else:
             response[config.LINKS] = \
                 _pagination_links(resource, req, None,
-                                  response[config.ID_FIELD])
+                                  response[id_field])
 
     # callbacks not supported on version diffs because of partial documents
     if version != 'diffs':
